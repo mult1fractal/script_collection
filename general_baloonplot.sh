@@ -2,136 +2,48 @@
 
 ##header done
 
+cutoff="0.0"
 ####PHYLUM
 
-cat *pavian_report_filtered.csv | grep -w "P" | awk -F"\t" '$1 > 0.1' | cut -f6 | sort | uniq | tr -d " " > .organismlist.dataR
+for i in *pavian_report_filtered.csv ; do
 
-# i just need to change the
-# header (change 01-GER to GER-01)
-printf "phylum," > phylum.csv
-for x in *pavian_report_filtered.csv ; do
-		samplename=$(echo "${x%_pavian_report_filtered.csv}" | cut -f2 -d "-")
-		sampleid=$(echo "${x%_pavian_report_filtered.csv}" | cut -f1 -d "-")
-		printf "${samplename}-${sampleid}," >> phylum.csv
-done
-printf "\n" >> phylum.csv
-##header done
+	samplename=$(echo "$i" | awk -F"_pavian_report_filtered.csv" '{print $1}')
 
-cat .organismlist.dataR | while IFS= read -r orgname ; do 
-	printf "${orgname}," >> phylum.csv
-	for x in *pavian_report_filtered.csv ; do
-		# if grep true else "NA,"		
-		readcount=$(grep -w "P" ${x}| cut -f1,6 | grep -w "$orgname" | cut -f1 | awk -F, '$1 > 0.1'| tr -d  "\n" | tr -d " ")
-		if [ -z "$readcount" ]
-			then
-      			printf "NA," >> phylum.csv
-			else
-      			printf "${readcount}," >> phylum.csv
-		fi
-	done
-	printf "\n" >> phylum.csv
-done
+########### Phylum
+	cat $i | grep -w "P" | cut -f1,6 | tr "\t" "," | tr -d  " " | awk -v z="$cutoff" '$1>=z' > tmp1_"$i"
+	# add column:  samplename
+	awk -v d="$samplename" -F"," 'BEGIN { OFS = "," } {$3=d; print}' tmp1_"$i" > phylum_only_"$i"
 
-sed -i 's/.$//' phylum.csv
+########### Genus
+# get abundance and genus name
+	cat $i | grep -w "G" | cut -f1,6 | tr "\t" "," | tr -d  " " | awk -v z="$cutoff" '$1>=z' > tmp1_"$i"
+	# add column:  samplename
+	awk -v d="$samplename" -F"," 'BEGIN { OFS = "," } {$3=d; print}' tmp1_"$i" > genus_only_"$i"
 
-rm .*.dataR
+############ Class
+# get abundance and class name
+	cat $i | grep -w "C" | cut -f1,6 | tr "\t" "," | tr -d  " " | awk -v z="$cutoff" '$1>=z' > tmp1_"$i"
+	# add column:  samplename
+	awk -v d="$samplename" -F"," 'BEGIN { OFS = "," } {$3=d; print}' tmp1_"$i" > class_only_"$i"
 
-
-####CLASS
-
-cat *pavian_report_filtered.csv | grep -w "C" | awk -F"\t" '$1 > 0.1' | cut -f6 | sort | uniq | tr -d " " > .organismlist.dataR
-
-# header
-printf "class," > class.csv
-for x in *pavian_report_filtered.csv ; do
-		samplename=$(echo "${x%_pavian_report_filtered.csv}" | cut -f2 -d "-")
-		sampleid=$(echo "${x%_pavian_report_filtered.csv}" | cut -f1 -d "-")
-		printf "${samplename}-${sampleid}," >> class.csv
-done
-printf "\n" >> class.csv
-##header done
-
-cat .organismlist.dataR | while IFS= read -r orgname ; do 
-	printf "${orgname}," >> class.csv
-	for x in *pavian_report_filtered.csv ; do
-		# if grep true else "NA,"		
-		readcount=$(grep -w "C" ${x}| cut -f1,6 | grep -w "$orgname" | cut -f1 | awk -F, '$1 > 0.1'| tr -d  "\n" | tr -d " ")
-		if [ -z "$readcount" ]
-			then
-      			printf "NA," >> class.csv
-			else
-      			printf "${readcount}," >> class.csv
-		fi
-	done
-	printf "\n" >> class.csv
+############ Species
+# get abundance and species name
+	cat $i | grep -w "S" | cut -f1,6 | tr "\t" "," | tr -s " " | awk -v z="$cutoff" '$1>=z' | awk '{sub(/^ +/,""); gsub(/, /,",")}1' > tmp1_"$i"
+	# add column:  samplename
+	awk -v d="$samplename" -F"," 'BEGIN { OFS = "," } {$3=d; print}' tmp1_"$i" > species_only_"$i"
 done
 
-sed -i 's/.$//' class.csv
+# create files for facet grid plot
+cat phylum_only* > phylum_plot.csv
+sed -i '1s/.*/Abundance,Organism,Sample_name\n&/' phylum_plot.csv
 
-rm .*.dataR
+cat genus_only* > genus_plot.csv
+sed -i '1s/.*/Abundance,Organism,Sample_name\n&/' genus_plot.csv
 
-####GENUS
+cat class_only* > class_plot.csv
+sed -i '1s/.*/Abundance,Organism,Sample_name\n&/' class_plot.csv
 
-cat *pavian_report_filtered.csv | grep -w "G" | awk -F"\t" '$1 > 0.1' | cut -f6 | sort | uniq | cut -f15,16 | tr -d " " > .organismlist.dataR
-
-# header
-printf "genus," > genus.csv
-for x in *pavian_report_filtered.csv ; do
-		samplename=$(echo "${x%_pavian_report_filtered.csv}" | cut -f2 -d "-")
-		sampleid=$(echo "${x%_pavian_report_filtered.csv}" | cut -f1 -d "-")
-		printf "${samplename}-${sampleid}," >> genus.csv
-done
-printf "\n" >> genus.csv
-##header done
-
-cat .organismlist.dataR | while IFS= read -r orgname ; do 
-	printf "${orgname}," >> genus.csv
-	for x in *pavian_report_filtered.csv ; do
-		# if grep true else "NA,"		
-		readcount=$(grep -w "G" ${x}| cut -f1,6 | grep -w "$orgname" | cut -f1 | awk -F, '$1 > 0.1'| tr -d  "\n" | tr -d " ")
-		if [ -z "$readcount" ]
-			then
-      			printf "NA," >> genus.csv
-			else
-      			printf "${readcount}," >> genus.csv
-		fi
-	done
-	printf "\n" >> genus.csv
-done
-
-sed -i 's/.$//' genus.csv
-
-rm .*.dataR
-
-####SPECIES
-
-cat *pavian_report_filtered.csv | grep -w "S" | awk -F"\t" '$1 > 0.1' | cut -f6 | sort | uniq | cut -f15,16 | awk '{$1=$1;print}' > .organismlist.dataR
-
-# header
-printf "species," > species.csv
-for x in *pavian_report_filtered.csv ; do
-		samplename=$(echo "${x%_pavian_report_filtered.csv}" | cut -f2 -d "-")
-		sampleid=$(echo "${x%_pavian_report_filtered.csv}" | cut -f1 -d "-")
-		printf "${samplename}-${sampleid}," >> species.csv
-done
-printf "\n" >> species.csv
-##header done
-
-cat .organismlist.dataR | while IFS= read -r orgname ; do 
-	printf "${orgname}," >> species.csv
-	for x in *pavian_report_filtered.csv ; do
-		# if grep true else "NA,"		
-		readcount=$(grep -w "S" ${x}| cut -f1,6 | grep -w "$orgname" | cut -f1 | awk -F, '$1 > 0.1'| tr -d  "\n" | tr -d " ")
-		if [ -z "$readcount" ]
-			then
-      			printf "NA," >> species.csv
-			else
-      			printf "${readcount}," >> species.csv
-		fi
-	done
-	printf "\n" >> species.csv
-done
-
-sed -i 's/.$//' species.csv
-
-rm .*.dataR
+cat species_only* > species_plot.csv
+sed -i '1s/.*/Abundance,Organism,Sample_name\n&/' species_plot.csv
+## remove data trash
+rm phylum_only* genus_only* class_only* species_only* tmp1*

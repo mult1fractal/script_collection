@@ -1,6 +1,8 @@
 # in a r-docker
 # docker run --rm -it -v $PWD:/input nanozoo/r_ggpubr:0.2.5--4b52011
-
+## plot: 
+#docker run --rm -it -v $PWD:/input nanozoo/r_ggplot2:0.1--6405f6d /bin/bash
+#R 
 
 install.packages("ggplot2")
 install.packages("magrittr")
@@ -8,59 +10,125 @@ install.packages("cowplot")
 install.packages("ggpubr")
 install.packages("viridis")
 
+
+
+
+# to install
+#install.packages("reshape2")
+#install.packages("viridis")
+#install.packages("ggplot2")
+
+#libs
 library(ggpubr)
 library(viridis)
+library(reshape2)
+library(ggplot2)
+library(viridis)
 
-#docker
+
+# inputs
 setwd ("/input")
+dt <- read.csv(file = 'genus_plot.csv')
+dt2 <- read.csv(file = 'phylum_plot.csv')
+dt3 <- read.csv(file = 'species_plot.csv')
+dt4 <- read.csv(file = 'class_plot.csv')
 
-# my data
 
-input  <- read.delim("phylum.csv", row.names = 1, sep = ",")
-input2 <- read.delim("class.csv", row.names = 1, sep = ",")
-input3 <- read.delim("species.csv", row.names = 1, sep = ",")
-input4 <- read.delim("genus.csv", row.names = 1, sep = ",")
+#balloon_melted <- melt(dt, id=c("Organism","Abundance"))
 
-#sorting data
-data <- input[,sort(names(input))]
-data2 <- input2[,sort(names(input2))]
-data3 <- input3[,sort(names(input3))]
-data4 <- input4[,sort(names(input4))]
+# Sizes just for png
+#sizew <- ceiling(( ncol(dt) * 200 ) + 4 )
+#sizeh <- ceiling(( nrow(dt) * 5 ) + 2 )
 
-svg("phylum.svg", height = 8, width = 8)
-#png("phylum.png", height = 1000, width = 800, units = "px", pointsize = 12 )
-plot <-	ggballoonplot(data, fill = "value") +
-  	scale_fill_viridis_c(option = "D")
-	ggpar(plot, legend.title = "Abundance\nin [%]",
-	xlab = "Samples", ylab = "Phylum")
+options(ggplot2.continuous.colour="viridis")
+
+######################################
+####Genus
+######################################
+
+##grouped: Case
+
+plot <- ggplot(dt, aes(x = Sample_name, y = Organism)) +
+facet_grid( ~ Sample_name, scales = "free", space = "free") +
+theme_light() +
+theme(panel.border = element_blank()) + 
+labs(y = element_blank(), x="sample") +
+geom_point( aes(size=Abundance, colour=Abundance) ) +
+scale_size_area(max_size=10) +
+labs(size="Abundance\n[%]", colour="Abundance\n[%]") + 
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+svg("overview_genus.svg", width = 20, height = 20)
+print(plot)
+
+
+##############################################################
+
+######################################
+####Phylum
+######################################
+
+##grouped: Case
+
+plot <- ggplot(dt2, aes(x = Sample_name, y = Organism)) +
+facet_grid( ~ Sample_name, scales = "free", space = "free") +
+theme_light() +
+theme(panel.border = element_blank()) + 
+labs(y = element_blank(), x="sample") +
+geom_point( aes(size=Abundance, colour=Abundance) ) +
+scale_size_area(max_size=10) +
+labs(size="Abundance\n[%]", colour="Abundance\n[%]") + 
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+svg("overview_phylum.svg", width = 20, height = 20)
+print(plot)
+
 dev.off()
 
-pdf("class.pdf")
-#png("class.png", height = 1000, width = 800, units = "px", pointsize = 12 )
-plot <-	ggballoonplot(data2, fill = "value") +
-  	scale_fill_viridis_c(option = "D")
-	ggpar(plot, legend.title = "Abundance\nin [%]",
-	xlab ="Samples", ylab = "Class")
+##############################################################
+
+######################################
+####Species
+######################################
+
+##grouped: Case
+
+plot <- ggplot(dt3, aes(x = Sample_name, y = Organism)) +
+facet_grid( ~ Sample_name, scales = "free", space = "free") +
+theme_light() +
+theme(panel.border = element_blank()) + 
+labs(y = element_blank(), x="sample") +
+geom_point( aes(size=Abundance, colour=Abundance) ) +
+scale_size_area(max_size=10) +
+labs(size="Abundance\n[%]", colour="Abundance\n[%]") + 
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+svg("overview_species.svg", width = 20, height = 20)
+print(plot)
+
 dev.off()
 
-svg("genus.png", height = 30, width = 8)
-#png("species.png", height = 1200, width = 800, units = "px", pointsize = 12 )
-plot <-	ggballoonplot(data4, fill = "value") +
-  	scale_fill_viridis_c(option = "D")
-	ggpar(plot, legend.title = "Abundance\nin [%]",
-	xlab ="Samples", ylab = "Genus")
+##############################################################
+
+######################################
+####Class
+######################################
+
+##grouped: Case
+
+plot <- ggplot(dt4, aes(x = Sample_name, y = Organism)) +
+facet_grid( ~ Sample_name, scales = "free", space = "free") +
+theme_light() +
+theme(panel.border = element_blank()) + 
+labs(y = element_blank(), x="sample") +
+geom_point( aes(size=Abundance, colour=Abundance) ) +
+scale_size_area(max_size=10) +
+labs(size="Abundance\n[%]", colour="Abundance\n[%]") + 
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+svg("overview_class.svg", width = 20, height = 20)
+print(plot)
+
 dev.off()
 
-pdf("species.pdf", height = 20, width = 8)
-#png("species.png", height = 1200, width = 800, units = "px", pointsize = 12 )
-plot <-	ggballoonplot(data3, fill = "value") +
-  	scale_fill_viridis_c(option = "D")
-	ggpar(plot, legend.title = "Abundance\nin [%]",
-	xlab ="Samples", ylab = "Species")
-dev.off()
-
-print("Done")
-
-# Docs
-# https://www.rdocumentation.org/packages/ggpubr/versions/0.2.2/topics/ggballoonplot
-# https://rpkgs.datanovia.com/ggpubr/reference/ggpar.html
+##############################################################
